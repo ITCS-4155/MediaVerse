@@ -1,0 +1,28 @@
+// -----------------------------------------------------------------------------
+// 🛠️ TEAM GUIDE: PRISMA & NEON DATABASE
+// -----------------------------------------------------------------------------
+// 1. SYNCING CHANGES:
+//    - After changing this file, run: `npx prisma db push`
+//      (This updates the tables in our Neon Cloud DB immediately)
+//
+// 2. UPDATING TYPES (Local Autocomplete):
+//    - To get the code-completion in VS Code, run: `npx prisma generate`
+//      (This updates the code inside node_modules so 'prisma.user' works)
+//
+// 3. ACCESSING DATA IN CODE:
+//    - Import the client: `import { prisma } from '@/lib/prisma'` (see lib/prisma.ts)
+//    - Create: `await prisma.user.create({ data: { email: 'test@test.com' } })`
+//    - Find:   `await prisma.mediaItem.findMany()`
+//    - Update: `await prisma.user.update({ where: { id: '...' }, data: { name: '...' } })`
+//
+// 4. VISUALIZING DATA:
+//    - Run `npx prisma studio` to open a local GUI to edit data like an Excel sheet.
+// -----------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
