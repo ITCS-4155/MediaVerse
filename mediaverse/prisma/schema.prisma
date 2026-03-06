@@ -26,3 +26,95 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum MediaType {
+  MOVIE
+  TV_SHOW
+  BOOK
+  GAME
+}
+
+enum LogStatus {
+  PLAN_TO_CONSUME 
+  IN_PROGRESS
+  COMPLETED
+  DROPPED
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  username  String     @unique
+  logs      MediaLog[]
+  createdAt DateTime   @default(now())
+}
+
+model Media {
+  id          String    @id @default(cuid())
+  type        MediaType
+  title       String
+  description String?
+  releaseDate DateTime?
+  coverImage  String?   // URL to the poster/cover
+  
+  // Relations to users
+  logs        MediaLog[]
+
+  // Relations to specific media details (1-to-1)
+  movieDetails MovieDetails?
+  tvDetails    TVDetails?
+  bookDetails  BookDetails?
+  gameDetails  GameDetails?
+}
+
+model MediaLog {
+  id        String    @id @default(cuid())
+  rating    Int?      // e.g., 1-10 or 1-5
+  review    String?   @db.Text
+  status    LogStatus
+  
+  userId    String
+  mediaId   String
+  
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media     Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, mediaId]) // A user can only have one active log per media item
+}
+
+model MovieDetails {
+  id        String @id @default(cuid())
+  mediaId   String @unique
+  director  String?
+  runtime   Int?   // in minutes
+  media     Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+model TVDetails {
+  id        String @id @default(cuid())
+  mediaId   String @unique
+  creator   String?
+  seasons   Int?
+  episodes  Int?
+  media     Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+model BookDetails {
+  id        String @id @default(cuid())
+  mediaId   String @unique
+  author    String
+  pageCount Int?
+  isbn      String?
+  media     Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+model GameDetails {
+  id        String @id @default(cuid())
+  mediaId   String @unique
+  developer String?
+  platforms String[] // e.g., ["PC", "PS5", "Xbox"]
+  media     Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
