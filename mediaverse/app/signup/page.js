@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -200,7 +201,7 @@ export default function SignUpPage() {
 
         <p style={styles.loginRow}>
           Already have an account?{" "}
-          <a href="/login" style={styles.loginLink}>Sign in</a>
+          <Link href="/login" style={styles.loginLink}>Sign in</Link>
         </p>
       </div>
     </div>

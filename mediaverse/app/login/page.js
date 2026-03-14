@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -23,7 +24,7 @@ const AppleIcon = () => (
   </svg>
 );
 
-export default function LoginPage() {
+export default function Page() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -143,7 +144,7 @@ export default function LoginPage() {
 
         <p style={styles.signupRow}>
           Don&apos;t have an account?{" "}
-          <a href="#" style={styles.signupLink}>Create one</a>
+          <Link href="/signup" style={styles.signupLink}>Create one</Link>
         </p>
       </div>
     </div>
