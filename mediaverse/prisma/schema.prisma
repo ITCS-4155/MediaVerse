@@ -26,3 +26,13 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model User {
+  id            String    @id @default(uuid())
+  name          String?
+  email         String    @unique
+  password      String    // This will store the bcrypt hash
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}

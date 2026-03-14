@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { signUpAction } from "../../lib/actions.js";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -36,14 +37,20 @@ export default function SignUpPage() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (form.password !== form.confirmPassword) {
-      alert("Passwords do not match.");
-      return;
-    }
-    // TODO: wire up to your auth/registration endpoint
-    console.log("Sign up submitted", form);
+  const handleSubmit = async (e) => {
+      e.preventDefault();
+      if (form.password !== form.confirmPassword) {
+          alert("Passwords do not match.");
+          return;
+      }
+
+      const formData = new FormData(e.target);
+
+      const response = await signUpAction(formData);
+
+      if (response?.error) {
+          alert(response.error);
+      }
   };
 
   const handleSocialSignUp = (provider) => {
