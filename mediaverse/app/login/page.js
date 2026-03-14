@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { loginAction } from "../../lib/actions.js";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -31,10 +32,16 @@ export default function Page() {
   const [focused, setFocused] = useState(null);
   const [hoveredSocial, setHoveredSocial] = useState(null);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // TODO: wire up to your auth endpoint
-    console.log("Login submitted", { email, password });
+  const handleSubmit = async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+
+      const response = await loginAction(formData);
+
+      if (response?.error) {
+          alert(response.error);
+      }
   };
 
   const handleSocialLogin = (provider) => {
@@ -69,6 +76,7 @@ export default function Page() {
             <label style={styles.label} htmlFor="email">Email</label>
             <input
               id="email"
+              name="email"
               type="email"
               required
               autoComplete="email"
@@ -86,6 +94,7 @@ export default function Page() {
             <div style={styles.passwordWrap}>
               <input
                 id="password"
+                name="password"
                 type={showPassword ? "text" : "password"}
                 required
                 autoComplete="current-password"
