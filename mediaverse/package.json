@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "nodemon --watch . --exec next dev",
-    "build": "next build",
+    "build": "npx prisma generate && next build",
     "start": "next start",
     "lint": "eslint"
   },
