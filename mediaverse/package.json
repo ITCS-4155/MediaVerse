@@ -28,7 +28,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "nodemon": "^3.1.14",
-    "prisma": "^7.4.2",
+    "prisma": "^7.5.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
