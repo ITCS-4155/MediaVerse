@@ -1,0 +1,21 @@
+type MediaType = "Movie" | "Show" | "Game" | "Book" | "Comic" | "Music" | "Podcast" | "Board/Card Game" | "Sport"
+type MediaStatus = "Plan to Watch" | "In Progress" | "Completed" | "Dropped";
+
+UniversalMediaItem {
+    title: string;
+    type: MediaType;
+    description: string
+    rating: number
+    status: MediaStatus
+    releaseDate: string
+    genres: string
+    creator: string
+
+    // System data
+    id: string;
+    externalId: string
+    userId: string
+    createdAt: string
+    updatedAt: string
+    imageUrl: string
+}

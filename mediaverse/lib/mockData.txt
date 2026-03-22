@@ -1,0 +1,78 @@
+mockSearchResults = [
+  {
+    // Mapped from TMDB (Movies)
+    title: "Interstellar",
+    type: "Movie",
+    description: "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival.",
+    imageUrl: "https://image.tmdb.org/t/p/w500/gEU2QlsUUHXcmpUmbpPPeuCCn6V.jpg", // Real TMDB format
+    releaseDate: "2014-11-05", // Standard YYYY-MM-DD from APIs
+    externalId: "tmdb-157336",
+    genres: ["Adventure", "Drama", "Science Fiction"],
+    creator: "Christopher Nolan",
+
+    // DB fields are null because it hasn't been saved yet
+    id: null,
+    rating: null,
+    status: null,
+    userId: null,
+  },
+  {
+    // Mapped from RAWG (Video Games)
+    title: "The Last of Us Part I",
+    type: "Game",
+    description: "Experience the emotional storytelling and unforgettable characters of Joel and Ellie.",
+    imageUrl: "https://media.rawg.io/media/games/b11/b115b2bc6a5957a917bc7601f4abdda2.jpg", // Real RAWG format
+    releaseDate: "2022-09-02",
+    externalId: "rawg-799265",
+    genres: ["Action", "Adventure"],
+    creator: "Naughty Dog",
+
+    id: null,
+    rating: null,
+    status: null,
+    userId: null,
+  }
+];
+
+
+
+
+
+
+
+
+
+mockSavedItems = [
+  {
+    id: "db-uuid-1234-5678-91011", // Prisma's generated UUID
+    title: "Dune",
+    type: "Movie",
+    description: "Paul Atreides, a brilliant and gifted young man born into a great destiny beyond his understanding...",
+    imageUrl: "https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
+    rating: 5,
+    status: "Completed",
+    releaseDate: "2021-09-15T00:00:00.000Z", // Prisma converts dates to ISO strings for the frontend
+    externalId: "tmdb-438631",
+    genres: ["Science Fiction", "Adventure"],
+    creator: "Denis Villeneuve",
+    userId: "user-uuid-9999",
+    createdAt: "2024-03-22T14:30:00.000Z", // Timestamp of when they clicked "Save"
+    updatedAt: "2024-03-23T09:15:00.000Z", // Timestamp of when they last updated their rating
+  },
+  {
+    id: "db-uuid-2222-3333-44445",
+    title: "Breaking Bad",
+    type: "Show",
+    description: "When Walter White, a New Mexico chemistry teacher, is diagnosed with Stage III cancer...",
+    imageUrl: "https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizR00.jpg",
+    rating: null,
+    status: "Plan to Watch",
+    releaseDate: "2008-01-20T00:00:00.000Z",
+    externalId: "tmdb-1396",
+    genres: ["Drama", "Crime"],
+    creator: "Vince Gilligan",
+    userId: "user-uuid-9999",
+    createdAt: "2024-03-24T10:00:00.000Z",
+    updatedAt: "2024-03-24T10:00:00.000Z",
+  }
+];
