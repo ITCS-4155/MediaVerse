@@ -46,15 +46,6 @@ export const PodcastIcon = ({ size = 20 }) => (
   </svg>
 );
 
-export const SportsIcon = ({ size = 20 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10"/>
-    <path d="M4.93 4.93l4.24 4.24"/><path d="M14.83 9.17l4.24-4.24"/>
-    <path d="M14.83 14.83l4.24 4.24"/><path d="M9.17 14.83l-4.24 4.24"/>
-    <circle cx="12" cy="12" r="4"/>
-  </svg>
-);
-
 // ── Shared UI icons ───────────────────────────────────────────────────────────
 
 export const ArrowRight = ({ size = 16 }) => (
@@ -217,33 +208,6 @@ export const mediaThemes = [
       { title: "The Daily",                    meta: "The New York Times",  rating: "8.8" },
       { title: "SmartLess",                    meta: "Bateman/Arnett/Hayes",rating: "8.9" },
       { title: "Radiolab",                     meta: "WNYC Studios",        rating: "9.2" },
-    ],
-  },
-  {
-    id: "sports",
-    label: "Sports",
-    tagline: "Follow every game. Miss nothing.",
-    count: "50+ leagues",
-    icon: <SportsIcon size={20} />,
-    iconLg: <SportsIcon size={28} />,
-    bg: "linear-gradient(135deg, #041008 0%, #071a0c 100%)",
-    surface: "#0a1008",
-    border: "rgba(132,204,22,0.25)",
-    accent: "#84cc16",
-    accentSoft: "rgba(132,204,22,0.1)",
-    accentGlow: "rgba(132,204,22,0.2)",
-    text: "#f7fee7",
-    sub: "#bef264",
-    font: "'Arial', sans-serif",
-    stats: ["Live scores", "Team tracker", "Season history"],
-    subcategories: ["NFL", "NBA", "Soccer", "MLB", "Tennis", "Formula 1", "MMA", "Golf"],
-    trending: [
-      { title: "Super Bowl LIX",         meta: "NFL · Feb 2025",       rating: "9.1" },
-      { title: "NBA Finals 2025",        meta: "NBA · Jun 2025",       rating: "9.0" },
-      { title: "Wimbledon 2025",         meta: "Tennis · Jul 2025",    rating: "8.8" },
-      { title: "Champions League Final", meta: "Soccer · May 2025",   rating: "9.2" },
-      { title: "F1 Monaco Grand Prix",   meta: "Formula 1 · May 2025",rating: "8.9" },
-      { title: "The Masters 2025",       meta: "Golf · Apr 2025",      rating: "8.7" },
     ],
   },
 ];

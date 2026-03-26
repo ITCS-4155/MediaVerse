@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { MediaCardGrid } from "@/components/media/MediaCard";
-import { ArrowRight, CheckIcon, StarIcon } from "@/components/media/mediaThemes";
+import { MediaCardGrid } from "../components/media/Mediacard";
+import { ArrowRight, CheckIcon, StarIcon } from "../components/media/Mediathemes";
 
 const testimonials = [
   { name: "Maya S.",   handle: "@mayastreams",  text: "Mediaverse replaced five different apps. I can't believe I went so long without it.", emoji: "🎬" },
@@ -40,9 +40,9 @@ export default function LandingPage() {
             <a href="#reviews" className="hover:text-gray-100 transition-colors">Reviews</a>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm text-gray-400 hover:text-gray-100 transition-colors px-3 py-1.5">Sign in</Link>
-            <Link href="/explore" className="text-sm font-bold px-4 py-2 bg-emerald-300 text-[#06080f] rounded-lg hover:bg-emerald-200 transition-colors">
-              Explore the app
+            {/*<Link href="/login" className="text-sm text-gray-400 hover:text-gray-100 transition-colors px-3 py-1.5">Sign in</Link>*/}
+            <Link href="/login" className="text-sm font-bold px-4 py-2 bg-emerald-300 text-[#06080f] rounded-lg hover:bg-emerald-200 transition-colors">
+                Sign in
             </Link>
           </div>
         </div>
@@ -58,14 +58,11 @@ export default function LandingPage() {
           Every story<br /><span className="text-emerald-300">you love,</span><br />one place.
         </h1>
         <p className="text-lg text-gray-400 max-w-xl leading-relaxed mb-12">
-          Movies, music, books, games, podcasts, sports — Mediaverse is the universal tracker for everything you watch, read, play, and hear.
+          Movies, music, books, games, podcasts— Mediaverse is the universal tracker for everything you watch, read, play, and hear.
         </p>
         <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
           <Link href="/signup" className="flex items-center gap-2 px-8 py-4 bg-emerald-300 text-[#06080f] rounded-xl font-bold text-sm hover:bg-emerald-200 transition-colors shadow-[0_0_40px_rgba(110,231,183,0.2)]">
             Start for free <ArrowRight />
-          </Link>
-          <Link href="/explore" className="flex items-center gap-2 px-8 py-4 border border-gray-700 text-gray-300 rounded-xl text-sm hover:border-gray-500 hover:text-white transition-colors">
-            Explore the app <ArrowRight />
           </Link>
         </div>
         <p className="text-xs text-gray-600">No credit card required · All 6 media types · Free forever</p>
@@ -81,7 +78,7 @@ export default function LandingPage() {
               Each media type has its own visual language — because tracking a movie feels different from tracking a book.
             </p>
           </div>
-          {/* ✅ Drop-in reusable component — all 6 themed cards */}
+          {/* Drop-in reusable component — all 6 themed cards */}
           <MediaCardGrid />
         </div>
       </section>
@@ -108,18 +105,6 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Stats */}
-      <section className="relative z-10 py-16 px-6 border-y border-gray-800/40 bg-gray-900/20">
-        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          {[{ value: "2M+", label: "Active trackers" }, { value: "180M", label: "Items logged" }, { value: "6", label: "Media types" }, { value: "4.9★", label: "App rating" }].map(({ value, label }) => (
-            <div key={label}>
-              <p className="text-3xl font-bold text-gray-50 tracking-tight mb-1">{value}</p>
-              <p className="text-xs text-gray-500 uppercase tracking-widest">{label}</p>
-            </div>
-          ))}
         </div>
       </section>
 
@@ -159,11 +144,8 @@ export default function LandingPage() {
             <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-4">Six worlds.<br /><span className="text-emerald-300">One home.</span></h2>
             <p className="text-gray-400 mb-10 leading-relaxed">Join 2 million people who track what they love — movies, music, books, games, podcasts, and sports.</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
-              <Link href="/signup" className="flex items-center gap-2 px-8 py-4 bg-emerald-300 text-[#06080f] rounded-xl font-bold text-sm hover:bg-emerald-200 transition-colors shadow-[0_0_40px_rgba(110,231,183,0.25)]">
-                Create free account <ArrowRight />
-              </Link>
-              <Link href="/explore" className="px-8 py-4 border border-gray-700 text-gray-300 rounded-xl text-sm hover:border-gray-500 hover:text-white transition-colors">
-                Explore the app
+              <Link href="/signup" className="px-8 py-4 border border-gray-700 text-gray-300 rounded-xl text-sm hover:border-gray-500 hover:text-white transition-colors">
+                  Create free account
               </Link>
             </div>
             <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs text-gray-600">

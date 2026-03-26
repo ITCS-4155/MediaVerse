@@ -120,10 +120,14 @@ export function TrendingItemCard({
 export function TrendingList({
   theme,
   limit,
+  offset = 0,
   onAdd,
   className = "",
 }) {
-  const items = limit ? theme.trending.slice(0, limit) : theme.trending;
+
+    const items = limit
+        ? theme.trending.slice(offset, offset + limit)
+        : theme.trending.slice(offset);
 
   return (
     <div className={`flex flex-col gap-3 ${className}`}>
@@ -131,7 +135,7 @@ export function TrendingList({
         <TrendingItemCard
           key={item.title}
           item={item}
-          rank={i + 1}
+          rank={offset + i + 1}
           theme={theme}
           onAdd={onAdd}
         />

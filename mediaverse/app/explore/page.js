@@ -2,19 +2,26 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { mediaThemes, getTheme, ArrowRight, PlusIcon } from "@/components/media/mediaThemes";
-import { MediaCard } from "@/components/media/MediaCard";
-import { TrendingList } from "@/components/media/TrendingItemCard";
-import { TrendingItem } from "@/components/media/Mediathemes";
+import { mediaThemes, getTheme, ArrowRight, } from "../components/media/Mediathemes";
+import { MediaCard } from "../components/media/Mediacard";
+import { TrendingList } from "../components/media/Trendingitemcard";
+import { TrendingItem } from "../components/media/Mediathemes";
+import {useRouter} from "next/navigation";
 
 export default function ExplorePage() {
   const [activeId, setActiveId] = useState("film");
   const current = getTheme(activeId);
+  const router = useRouter();
 
   const handleAdd = (item) => {
     // TODO: wire to your tracking API
     console.log("Adding to tracker:", item.title);
   };
+
+    const navigateToSearch = (genre = "") => {
+        const url = `/search?type=${activeId}${genre ? `&genre=${encodeURIComponent(genre)}` : ""}`;
+        router.push(url);
+    };
 
   return (
     <div
@@ -54,10 +61,10 @@ export default function ExplorePage() {
             ))}
           </div>
 
-          <Link href="/signup"
+          <Link href="/profile"
             className="text-xs font-bold px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1"
             style={{ backgroundColor: current.accent, color: "#060810" }}>
-            <PlusIcon /> Track this
+             Your account
           </Link>
         </div>
       </div>
@@ -65,38 +72,63 @@ export default function ExplorePage() {
       {/* Main content */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 pt-24 pb-20">
 
-        {/* Section header */}
-        <div className="mb-10">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500"
-              style={{ backgroundColor: current.accentSoft, border: `1px solid ${current.border}`, color: current.accent }}>
-              {current.icon}
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight transition-colors duration-500"
-                style={{ color: current.text, fontFamily: current.font }}>
-                {current.label}
-              </h1>
-              <p className="text-xs transition-colors duration-500" style={{ color: current.sub }}>
-                Browse and track your favorites
-              </p>
-            </div>
-          </div>
+          {/* Section header */}
+          <div className="mb-10">
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+
+                  {/* Icon and Text */}
+                  <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500"
+                           style={{ backgroundColor: current.accentSoft, border: `1px solid ${current.border}`, color: current.accent }}>
+                          {current.icon}
+                      </div>
+                      <div>
+                          <h1 className="text-3xl font-bold tracking-tight transition-colors duration-500"
+                              style={{ color: current.text, fontFamily: current.font }}>
+                              {current.label}
+                          </h1>
+                          <p className="text-xs transition-colors duration-500" style={{ color: current.sub }}>
+                              Browse and track your favorites
+                          </p>
+                      </div>
+                  </div>
+
+                  {/* Search Button */}
+                  <button
+                      onClick={() => navigateToSearch()}
+                      className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 hover:opacity-80 hover:scale-105 shadow-lg"
+                      style={{
+                          backgroundColor: current.accent,
+                          color: "#060810",
+                          boxShadow: `0 4px 20px -5px ${current.accent}`
+                      }}
+                  >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="11" cy="11" r="8"></circle>
+                          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                      Search {current.label}
+                  </button>
+              </div>
 
           {/* Subcategory pills */}
-          <div className="flex flex-wrap gap-2 mt-5">
-            <button className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300"
-              style={{ backgroundColor: current.accentSoft, border: `1px solid ${current.border}`, color: current.accent }}>
-              All
-            </button>
-            {current.subcategories.map((sub) => (
-              <button key={sub}
-                className="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 hover:opacity-80"
-                style={{ border: `1px solid ${current.border}`, color: current.sub, backgroundColor: "transparent" }}>
-                {sub}
-              </button>
-            ))}
-          </div>
+            <div className="flex flex-wrap gap-2 mt-5">
+                <button
+                    onClick={() => navigateToSearch()}
+                    className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 cursor-pointer hover:opacity-80"
+                    style={{ backgroundColor: current.accentSoft, border: `1px solid ${current.border}`, color: current.accent }}>
+                    All
+                </button>
+                {current.subcategories.map((sub) => (
+                    <button key={sub}
+                            onClick={() => navigateToSearch(sub)}
+                            className="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer hover:opacity-80"
+                            style={{ border: `1px solid ${current.border}`, color: current.sub, backgroundColor: "transparent" }}>
+                        {sub}
+                    </button>
+                ))}
+            </div>
         </div>
 
         {/* Trending — uses reusable TrendingList */}
@@ -112,10 +144,10 @@ export default function ExplorePage() {
             </button>
           </div>
 
-          {/* ✅ Reusable TrendingList — renders ranked items with add buttons */}
+          {/* Reusable TrendingList — renders ranked items with add buttons */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <TrendingList theme={current} limit={3} onAdd={handleAdd} />
-            <TrendingList theme={current} limit={3} onAdd={handleAdd} />
+            <TrendingList theme={current} limit={3} offset={0} onAdd={handleAdd} />
+            <TrendingList theme={current} limit={3} offset={3} onAdd={handleAdd} />
           </div>
         </div>
 
@@ -125,7 +157,7 @@ export default function ExplorePage() {
             style={{ color: current.accent }}>
             About this category
           </h2>
-          {/* ✅ Reusable MediaCard — full-width, large size */}
+          {/* Reusable MediaCard — full-width, large size */}
           <MediaCard theme={current} size="lg" showBrowseLink={false} />
         </div>
 
@@ -149,17 +181,6 @@ export default function ExplorePage() {
           </div>
         </div>
 
-        {/* Sign up nudge */}
-        <div className="mt-16 text-center">
-          <p className="text-sm mb-4 transition-colors duration-500" style={{ color: current.sub }}>
-            Want to track, rate, and build lists?
-          </p>
-          <Link href="/signup"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 hover:opacity-90"
-            style={{ backgroundColor: current.accent, color: "#060810" }}>
-            Create free account <ArrowRight />
-          </Link>
-        </div>
       </div>
     </div>
   );
