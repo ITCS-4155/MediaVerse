@@ -15,7 +15,7 @@ export async function signUpAction(formData) {
     } catch (e) {
         console.error("THE REAL ERROR:", e);
     }
-    redirect("/settings");
+    redirect("/explore");
 }
 
 export async function loginAction(formData) {
@@ -39,10 +39,10 @@ export async function loginAction(formData) {
         console.log("Login Error:", e);
         return { error: "An error occurred during login." };
     }
-    redirect("/settings");
+    redirect("/explore");
 }
 
 export async function logoutAction() {
     await clearSession();
-    redirect("/login");
+    redirect("/homepage");
 }
