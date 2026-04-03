@@ -14,7 +14,7 @@ export async function saveMedia(mediaData, userId) {
                     externalId: mediaData.externalId,
                 },
             },
-            update: {}, // If it exists, just return it
+            update: {},
             create: {
                 title: mediaData.title,
                 type: mediaData.type,
@@ -101,7 +101,7 @@ export async function getUserLibrary(userId) {
         const library = await prisma.mediaItem.findMany({
             where: { userId: userId },
             orderBy: { updatedAt: 'desc' },
-            include: { lists: true } // Pulls in which lists it belongs to
+            include: { lists: true }
         });
         return { success: true, data: library };
     } catch (error) {
@@ -118,7 +118,7 @@ export async function getUserLists(userId) {
         const lists = await prisma.list.findMany({
             where: { userId: userId },
             include: {
-                _count: { select: { mediaItems: true } } // Quick count for UI (e.g., "Favorites (12)")
+                _count: { select: { mediaItems: true } }
             }
         });
         return { success: true, data: lists };
@@ -136,12 +136,12 @@ export async function updateMediaEntry(mediaId, userId, updateData) {
         const updatedItem = await prisma.mediaItem.update({
             where: {
                 id: mediaId,
-                userId: userId // Security check: Ensure they own the item
+                userId: userId
             },
             data: {
-                status: updateData.status, // e.g., "Completed", "Watching"
-                rating: updateData.rating, // e.g., 8.5
-                review: updateData.review, // e.g., "Absolutely incredible."
+                status: updateData.status,
+                rating: updateData.rating,
+                review: updateData.review,
             }
         });
         return { success: true, data: updatedItem };
@@ -160,7 +160,7 @@ export async function removeMediaFromList(mediaId, listId, userId) {
             where: { id: listId, userId: userId },
             data: {
                 mediaItems: {
-                    disconnect: { id: mediaId } // Prisma magic: breaks the link, keeps the media
+                    disconnect: { id: mediaId }
                 }
             }
         });
@@ -194,11 +194,11 @@ export async function getListDetails(listId, userId) {
         const list = await prisma.list.findFirst({
             where: {
                 id: listId,
-                userId: userId // Security check!
+                userId: userId
             },
             include: {
                 mediaItems: {
-                    orderBy: { updatedAt: 'desc' } // Shows most recently added first
+                    orderBy: { updatedAt: 'desc' }
                 }
             }
         });
@@ -218,12 +218,9 @@ export async function deleteList(listId, userId) {
         await prisma.list.delete({
             where: {
                 id: listId,
-                userId: userId // Security check!
+                userId: userId
             }
         });
-        // Note: Because of how Prisma relationships work, deleting the list
-        // does NOT delete the media items inside it from the user's master library.
-        // It just destroys the "folder" holding them.
         return { success: true };
     } catch (error) {
         console.error("Error deleting list:", error);
