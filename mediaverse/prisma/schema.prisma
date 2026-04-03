@@ -41,13 +41,12 @@ model User {
 
 model List {
   id          String      @id @default(uuid())
-  name        String      // e.g., "Top 10 Movies", "Currently Playing"
+  name        String
   description String?
 
   userId      String
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // The magic many-to-many connection
   mediaItems  MediaItem[]
 
   createdAt   DateTime    @default(now())
@@ -60,7 +59,8 @@ model MediaItem {
   type        String
   description String?
   imageUrl    String?
-  rating      Int?
+  rating      Float?
+  review      String?  @db.Text
   status      String   @default("Plan to Watch")
   releaseDate DateTime?
   externalId  String
@@ -69,7 +69,6 @@ model MediaItem {
 
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
 
   lists       List[]
 
