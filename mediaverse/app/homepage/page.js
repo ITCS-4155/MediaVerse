@@ -15,14 +15,6 @@ export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
 
 
-const [currentUser, setCurrentUser] = useState(null);
-useEffect(() => {
-  fetch("/api/me")
-    .then((r) => (r.ok ? r.json() : null))
-    .then((data) => setCurrentUser(data?.user ?? null))
-    .catch(() => setCurrentUser(null));
-}, []);
-
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", fn);
@@ -47,19 +39,16 @@ useEffect(() => {
             <a href="#media" className="hover:text-gray-100 transition-colors">Media</a>
             <a href="#features" className="hover:text-gray-100 transition-colors">Features</a>
             <a href="#reviews" className="hover:text-gray-100 transition-colors">Reviews</a>
-           <Link href="/profile/mayastreams" className="text-emerald-300 hover:text-emerald-200 transition-colors">
-  Profile
-</Link>
           </div>
           <div className="flex items-center gap-3">
             {/* <Link href="/login" className="text-sm text-gray-400 hover:text-gray-100 transition-colors px-3 py-1.5">Sign in</Link>
             <Link href="/login" className="text-sm font-bold px-4 py-2 bg-emerald-300 text-[#06080f] rounded-lg hover:bg-emerald-200 transition-colors">
                 Sign in
             </Link> */}
-            
-          <Link href="/profile/mayastreams" className="w-8 h-8 rounded-full bg-emerald-900/60 border border-emerald-800 flex items-center justify-center text-xs font-bold text-emerald-300 hover:bg-emerald-900 transition-colors">
-  MS
-</Link>
+
+              <Link href="/login" className="text-sm font-bold px-4 py-2 bg-emerald-300 text-[#06080f] rounded-lg hover:bg-emerald-200 transition-colors">
+                  Sign in
+              </Link>
           </div>
         </div>
       </nav>

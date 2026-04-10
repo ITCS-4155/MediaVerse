@@ -1,17 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import Link from "next/link";
 import { mediaThemes, getTheme, ArrowRight, } from "../components/media/Mediathemes";
 import { MediaCard } from "../components/media/Mediacard";
 import { TrendingList } from "../components/media/Trendingitemcard";
-import { TrendingItem } from "../components/media/Mediathemes";
-import {useRouter} from "next/navigation";
+import { useRouter } from "next/navigation";
+
+function getInitials(name) {
+    if (!name) return "US";
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+}
 
 export default function ExplorePage() {
   const [activeId, setActiveId] = useState("film");
+  const [currentUser, setCurrentUser] = useState(null);
   const current = getTheme(activeId);
   const router = useRouter();
+
+    useEffect(() => {
+        fetch("/api/me")
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => setCurrentUser(data?.user ?? null))
+            .catch(() => setCurrentUser(null));
+    }, []);
 
   const handleAdd = (item) => {
     // TODO: wire to your tracking API
@@ -61,11 +73,17 @@ export default function ExplorePage() {
             ))}
           </div>
 
-          <Link href="/profile"
-            className="text-xs font-bold px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1"
-            style={{ backgroundColor: current.accent, color: "#060810" }}>
-             Your account
-          </Link>
+            <Link href="/profile"
+                  className="w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold transition-all duration-300 hover:scale-105"
+                  style={{
+                      backgroundColor: current.accentSoft,
+                      borderColor: current.border,
+                      color: current.accent
+                  }}
+                  title={currentUser?.name || "Your Profile"}
+            >
+                {currentUser?.name ? getInitials(currentUser.name) : "US"}
+            </Link>
         </div>
       </div>
 

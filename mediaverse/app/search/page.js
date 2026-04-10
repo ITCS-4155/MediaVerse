@@ -3,9 +3,8 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { mediaThemes, getTheme, ArrowRight } from "../components/media/Mediathemes";
+import { mediaThemes, getTheme } from "../components/media/Mediathemes";
 
-// ⚠️ Next.js requires useSearchParams to be wrapped in a Suspense boundary
 export default function SearchPageWrapper() {
     return (
         <Suspense fallback={<div className="min-h-screen bg-[#060810]" />}>
@@ -14,27 +13,29 @@ export default function SearchPageWrapper() {
     );
 }
 
+function getInitials(name) {
+    if (!name) return "US";
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+}
+
 function SearchPage() {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
+    const [currentUser, setCurrentUser] = useState(null);
 
-    // 1. Read the current state directly from the URL (e.g., ?type=movie&q=batman)
     const urlType = searchParams.get("type") || "film";
     const urlQuery = searchParams.get("q") || "";
     const urlGenre = searchParams.get("genre") || "";
 
-    // 2. Local state for the UI
     const current = getTheme(urlType);
     const [searchInput, setSearchInput] = useState(urlQuery);
     const [results, setResults] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // 3. The Fetch Logic (Triggered whenever the URL changes)
     useEffect(() => {
         const fetchResults = async () => {
-            // Don't search if both query and genre are empty
             if (!urlQuery && !urlGenre) {
                 setResults([]);
                 return;
@@ -44,7 +45,6 @@ function SearchPage() {
             setError(null);
 
             try {
-                // Calls the Unified API route we built earlier!
                 const res = await fetch(`/api/search?type=${urlType}&q=${encodeURIComponent(urlQuery)}&genre=${encodeURIComponent(urlGenre)}`);
                 const data = await res.json();
 
@@ -63,15 +63,19 @@ function SearchPage() {
         fetchResults();
     }, [urlType, urlQuery, urlGenre]);
 
-    // 4. Update URL functions (These don't fetch data, they just change the URL, which triggers the useEffect)
+    useEffect(() => {
+        fetch("/api/me")
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => setCurrentUser(data?.user ?? null))
+            .catch(() => setCurrentUser(null));
+    }, []);
+
     const handleTypeChange = (newType) => {
-        // When changing types, we clear the genre because a Movie genre might not exist for Books
         router.push(`${pathname}?type=${newType}&q=${encodeURIComponent(searchInput)}&genre=`);
     };
 
     const handleSearchSubmit = (e) => {
         e.preventDefault();
-        // When submitting a text search, we clear the genre to prioritize the text
         router.push(`${pathname}?type=${urlType}&q=${encodeURIComponent(searchInput)}&genre=`);
     };
 
@@ -124,9 +128,15 @@ function SearchPage() {
                     </div>
 
                     <Link href="/profile"
-                          className="text-xs font-bold px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1"
-                          style={{ backgroundColor: current.accent, color: "#060810" }}>
-                        Your account
+                          className="w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold transition-all duration-300 hover:scale-105"
+                          style={{
+                              backgroundColor: current.accentSoft,
+                              borderColor: current.border,
+                              color: current.accent
+                          }}
+                          title={currentUser?.name || "Your Profile"}
+                    >
+                        {currentUser?.name ? getInitials(currentUser.name) : "US"}
                     </Link>
                 </div>
             </div>
