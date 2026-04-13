@@ -1,7 +1,7 @@
 "use client";
 
 import {useState, useRef, useCallback, useEffect} from "react";
-import { updateProfile, updateAccount, deleteAccount, getUserProfile } from "../actions/library";
+import { updateProfile, updateAccount, deleteAccount, getUserProfile, logoutUser } from "../actions/library";
 import Link from "next/link";
 
 const CameraIcon = () => (
@@ -146,6 +146,15 @@ export default function Page() {
         }
     };
 
+    const handleLogout = async () => {
+        try {
+            await logoutUser();
+        } catch (error) {
+            console.error(error);
+        }
+        window.location.href = "/";
+    };
+
     const handleDeleteAccount = async () => {
         if (!userId) return;
         const confirmDelete = confirm("Are you completely sure? This will delete all your tracked media, lists, and your account permanently.");
@@ -153,6 +162,7 @@ export default function Page() {
         if (confirmDelete) {
             const res = await deleteAccount(userId);
             if (res.success) {
+                await logoutUser();
                 window.location.href = "/";
             } else {
                 alert("Failed to delete account.");
@@ -310,8 +320,9 @@ export default function Page() {
                             <p style={styles.sectionSub}>Control your data and visibility.</p>
                             <div style={styles.dangerZone}>
                                 <p style={styles.dangerTitle}>Danger zone</p>
-                                <p style={styles.dangerDesc}>These actions are permanent and cannot be undone.</p>
+                                <p style={styles.dangerDesc}>Manage your session or permanently remove your account data.</p>
                                 <div style={styles.dangerBtns}>
+                                    <button onClick={handleLogout} style={styles.logoutBtn}>Log out</button>
                                     <button onClick={handleDeleteAccount} style={styles.dangerBtnFill}>Delete account</button>
                                 </div>
                             </div>
@@ -411,6 +422,7 @@ const styles = {
     dangerTitle: { margin: "0 0 0.3rem", fontSize: "0.85rem", fontWeight: "700", letterSpacing: "0.06em", textTransform: "uppercase", color: "#f87171" },
     dangerDesc: { margin: "0 0 1.25rem", fontSize: "0.85rem", color: "#9ca3af" },
     dangerBtns: { display: "flex", gap: "0.75rem", flexWrap: "wrap" },
+    logoutBtn: { padding: "0.6rem 1.1rem", border: "1px solid #374151", borderRadius: "7px", background: "none", color: "#f9fafb", fontSize: "0.85rem", cursor: "pointer", fontWeight: "600", fontFamily: "'Georgia', serif", transition: "background-color 0.2s" },
     dangerBtnFill: { padding: "0.6rem 1.1rem", border: "none", borderRadius: "7px", backgroundColor: "#7f1d1d", color: "#fecaca", fontSize: "0.85rem", cursor: "pointer", fontWeight: "700", fontFamily: "'Georgia', serif" },
     saveBar: { paddingTop: "1.5rem", borderTop: "1px solid #1f2937" },
     saveBtn: { display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.8rem 2rem", backgroundColor: "#6ee7b7", color: "#0b0f1a", border: "none", borderRadius: "8px", fontSize: "0.92rem", fontWeight: "700", letterSpacing: "0.02em", cursor: "pointer", fontFamily: "'Georgia', serif", transition: "opacity 0.2s" },

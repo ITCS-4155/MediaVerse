@@ -2,6 +2,7 @@
 
 import { prisma } from "../../lib/prisma";
 import {revalidatePath} from "next/cache";
+import { clearSession } from "../../lib/auth";
 
 // ==========================================
 // SAVE MEDIA (MASTER LIBRARY ONLY)
@@ -313,5 +314,18 @@ export async function getUserProfile(userId) {
     } catch (error) {
         console.error("Error fetching user profile:", error);
         return { error: "Failed to load user profile." };
+    }
+}
+
+// ==========================================
+// LOGOUT USER
+// ==========================================
+export async function logoutUser() {
+    try {
+        await clearSession();
+        return { success: true };
+    } catch (error) {
+        console.error("Error logging out:", error);
+        return { error: "Failed to log out." };
     }
 }
