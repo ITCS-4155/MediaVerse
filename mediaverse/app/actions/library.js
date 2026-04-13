@@ -1,6 +1,7 @@
 "use server";
 
-import prisma from "../../lib/prisma";
+import { prisma } from "../../lib/prisma";
+import {revalidatePath} from "next/cache";
 
 // ==========================================
 // SAVE MEDIA (MASTER LIBRARY ONLY)
@@ -225,5 +226,92 @@ export async function deleteList(listId, userId) {
     } catch (error) {
         console.error("Error deleting list:", error);
         return { error: "Failed to delete list." };
+    }
+}
+
+// ==========================================
+// UPDATE PROFILE (Name, Bio, Avatar)
+// ==========================================
+export async function updateProfile(userId, profileData) {
+    try {
+        const updatedUser = await prisma.user.update({
+            where: { id: userId },
+            data: {
+                name: profileData.name,
+                location: profileData.location,
+                bio: profileData.bio,
+                image: profileData.avatar,
+            },
+        });
+
+        revalidatePath("/profile");
+        revalidatePath("/", "layout");
+
+        return { success: true, user: updatedUser };
+    } catch (error) {
+        console.error("Error updating profile:", error);
+        return { error: "Failed to update profile." };
+    }
+}
+
+// ==========================================
+// UPDATE ACCOUNT (Email, Password)
+// ==========================================
+export async function updateAccount(userId, accountData) {
+    try {
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) return { error: "User not found." };
+
+        const dataToUpdate = { email: accountData.email };
+
+        if (accountData.newPassword) {
+            if (user.password !== accountData.currentPassword) {
+                return { error: "Current password is incorrect." };
+            }
+            dataToUpdate.password = accountData.newPassword;
+        }
+
+        await prisma.user.update({
+            where: { id: userId },
+            data: dataToUpdate,
+        });
+
+        revalidatePath("/profile");
+        revalidatePath("/", "layout");
+
+        return { success: true };
+    } catch (error) {
+        console.error("Error updating account:", error);
+        return { error: "Failed to update account. Email might already be in use." };
+    }
+}
+
+// ==========================================
+// DELETE ACCOUNT
+// ==========================================
+export async function deleteAccount(userId) {
+    try {
+        await prisma.user.delete({
+            where: { id: userId }
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("Error deleting account:", error);
+        return { error: "Failed to delete account." };
+    }
+}
+
+// ==========================================
+// GET COMPLETE USER PROFILE
+// ==========================================
+export async function getUserProfile(userId) {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: userId }
+        });
+        return { success: true, data: user };
+    } catch (error) {
+        console.error("Error fetching user profile:", error);
+        return { error: "Failed to load user profile." };
     }
 }

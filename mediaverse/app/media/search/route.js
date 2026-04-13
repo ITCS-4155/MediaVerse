@@ -13,6 +13,8 @@ const redis = new Redis({
 // ==========================================
 async function getSpotifyToken() {
     const authString = Buffer.from(`${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`).toString('base64');
+
+    // 🛠️ FIX: The REAL Spotify Auth URL
     const res = await fetch('https://accounts.spotify.com/api/token', {
         method: 'POST',
         headers: {
@@ -36,29 +38,27 @@ async function getIGDBToken() {
 export async function GET(req) {
     try {
         const { searchParams } = new URL(req.url);
-        const query = searchParams.get("q");
-        const genre = searchParams.get("genre"); // 🆕 Grab the genre
-        const type = searchParams.get("type");
+        const query = searchParams.get("q") || "";
+        const genre = searchParams.get("genre") || "";
+        let type = searchParams.get("type");
 
-        if (!type || (!query && !genre)) {
-            return NextResponse.json({ error: "Missing search parameters" }, { status: 400 });
+        if (type === "film") type = "movie";
+
+        if (!type) {
+            return NextResponse.json({ error: "Type is required" }, { status: 400 });
         }
 
-        // DYNAMIC CACHE KEY
-        const cacheTerm = query ? `text:${query.toLowerCase()}` : `genre:${genre.toLowerCase()}`;
+        const cacheTerm = query ? `text:${query.toLowerCase()}` : genre ? `genre:${genre.toLowerCase()}` : `all`;
         const cacheKey = `search:${type}:${cacheTerm}`;
 
         // --- CACHE CHECK ---
         const cachedIds = await redis.get(cacheKey);
 
         if (cachedIds && Array.isArray(cachedIds) && cachedIds.length > 0) {
-            console.log(`🟢 CACHE HIT (Query): ${cacheKey}`);
+            console.log(`🟢 CACHE HIT: ${cacheKey}`);
             const cachedObjects = await redis.mget(...cachedIds);
             const validObjects = cachedObjects.filter(Boolean);
-
-            if (validObjects.length > 0) {
-                return NextResponse.json({ results: validObjects });
-            }
+            if (validObjects.length > 0) return NextResponse.json({ results: validObjects });
         }
 
         console.log(`🔴 CACHE MISS: Fetching external APIs for ${cacheKey}`);
@@ -68,25 +68,20 @@ export async function GET(req) {
         // MOVIES / SHOWS (TMDB)
         // ==========================================
         if (type === "movie" || type === "show") {
-            // Determine if we search by text, or discover by genre
             let url;
             if (query) {
                 url = `https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(query)}`;
-            } else {
+            } else if (genre) {
                 const apiGenre = getApiGenreFormat("movie", genre);
-                // We use 'movie' as the default discover endpoint here
-                url = `https://api.themoviedb.org/3/discover/movie?with_genres=${apiGenre}`;
+                url = `https://api.themoviedb.org/3/discover/${type === "show" ? "tv" : "movie"}?with_genres=${apiGenre}`;
+            } else {
+                url = `https://api.themoviedb.org/3/discover/${type === "show" ? "tv" : "movie"}?sort_by=popularity.desc`;
             }
 
-            const response = await fetch(url, {
-                headers: {
-                    accept: "application/json",
-                    Authorization: `Bearer ${process.env.TMDB_API_TOKEN}`,
-                },
-            });
+            const response = await fetch(url, { headers: { accept: "application/json", Authorization: `Bearer ${process.env.TMDB_API_TOKEN}` }});
             if (!response.ok) throw new Error("TMDB fetch failed");
             const data = await response.json();
-            rawResults = data.results;
+            rawResults = data.results || [];
         }
 
         // ==========================================
@@ -95,10 +90,12 @@ export async function GET(req) {
         else if (type === "book") {
             let url;
             if (query) {
-                url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&key=${process.env.GOOGLE_BOOKS_API_TOKEN}`;
-            } else {
+                url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=10&key=${process.env.GOOGLE_BOOKS_API_TOKEN}`;
+            } else if (genre) {
                 const apiGenre = getApiGenreFormat("book", genre);
                 url = `https://www.googleapis.com/books/v1/volumes?q=subject:"${encodeURIComponent(apiGenre)}"&maxResults=10&key=${process.env.GOOGLE_BOOKS_API_TOKEN}`;
+            } else {
+                url = `https://www.googleapis.com/books/v1/volumes?q=subject:"fiction"&orderBy=relevance&maxResults=10&key=${process.env.GOOGLE_BOOKS_API_TOKEN}`;
             }
 
             const response = await fetch(url);
@@ -112,22 +109,20 @@ export async function GET(req) {
         // ==========================================
         else if (type === "game") {
             const freshIgdbToken = await getIGDBToken();
-
             let bodyString;
+
             if (query) {
                 bodyString = `search "${query}"; fields name, cover.url, first_release_date, summary; limit 10;`;
-            } else {
+            } else if (genre) {
                 const apiGenre = getApiGenreFormat("game", genre);
                 bodyString = `fields name, cover.url, first_release_date, summary; where genres = (${apiGenre}); limit 10;`;
+            } else {
+                bodyString = `fields name, cover.url, first_release_date, summary; sort follows desc; limit 10;`;
             }
 
             const response = await fetch("https://api.igdb.com/v4/games", {
                 method: "POST",
-                headers: {
-                    "Accept": "application/json",
-                    "Client-ID": process.env.IGDB_CLIENT_ID,
-                    "Authorization": `Bearer ${freshIgdbToken}`,
-                },
+                headers: { "Accept": "application/json", "Client-ID": process.env.IGDB_CLIENT_ID, "Authorization": `Bearer ${freshIgdbToken}` },
                 body: bodyString,
             });
             if (!response.ok) throw new Error("IGDB fetch failed");
@@ -140,28 +135,46 @@ export async function GET(req) {
         else if (type === "music" || type === "podcast") {
             const freshSpotifyToken = await getSpotifyToken();
 
-            let searchQuery = query
-                ? encodeURIComponent(query)
-                : `genre:"${encodeURIComponent(getApiGenreFormat(type, genre))}"`;
+            let searchQuery = "";
 
-            const response = await fetch(
-                `https://api.spotify.com/v1/search?q=${searchQuery}&type=album,track,show&limit=10`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${freshSpotifyToken}`,
-                    },
+            if (query) {
+                searchQuery = query;
+            } else if (genre) {
+                if (type === "podcast") {
+                    searchQuery = `${genre} podcast`;
+                } else {
+                    searchQuery = `genre:"${getApiGenreFormat("music", genre)}"`;
                 }
-            );
+            } else {
+                if (type === "podcast") {
+                    searchQuery = "trending podcasts";
+                } else {
+                    searchQuery = "tag:new";
+                }
+            }
+
+            const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=${type === "podcast" ? "show" : "album,track"}&limit=10`;
+
+            const response = await fetch(url, { headers: { Authorization: `Bearer ${freshSpotifyToken}` } });
+
             if (!response.ok) throw new Error("Spotify fetch failed");
             const data = await response.json();
-            rawResults = [...(data.albums?.items || []), ...(data.tracks?.items || [])];
+
+            const validAlbums = (data.albums?.items || []).filter(album => album.album_type !== "compilation");
+            const validTracks = (data.tracks?.items || []).filter(track => track.album?.album_type !== "compilation");
+
+            rawResults = [
+                ...validAlbums,
+                ...validTracks,
+                ...(data.shows?.items || [])
+            ];
         }
 
         else {
             return NextResponse.json({ error: "Invalid media type" }, { status: 400 });
         }
 
-        // --- DATA TRANSFORMATION ---
+        // --- DATA TRANSFORMATION
         const normalizedResults = normalizeMediaResults(rawResults, type).slice(0, 10);
 
         // --- CACHE SAVE ---

@@ -40,16 +40,18 @@ function mapTMDB(item) {
 // GOOGLE BOOKS MAPPER
 function mapGoogleBooks(item) {
     const info = item.volumeInfo || {};
+    let img = info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || null;
+    if (img) img = img.replace("zoom=1", "zoom=2").replace("http:", "https:");
+
     return {
         title: info.title || "Unknown Title",
         type: "Book",
         description: info.description || null,
-        imageUrl: info.imageLinks?.thumbnail?.replace("zoom=1", "zoom=2") || null,
+        imageUrl: img,
         releaseDate: info.publishedDate || null,
         externalId: `book-${item.id}`,
         genres: info.categories || [],
         creator: info.authors ? info.authors.join(", ") : null,
-
         id: null, rating: null, status: null, userId: null,
     };
 }
@@ -72,16 +74,19 @@ function mapIGDB(item) {
 
 // SPOTIFY MAPPER
 function mapSpotify(item) {
+    const date = item.release_date || item.album?.release_date || null;
+
     return {
-        title: item.name || "Unknown Track",
+        title: item.name || "Unknown Title",
         type: item.type === "show" ? "Podcast" : "Music",
         description: item.description || null,
-        imageUrl: item.images && item.images.length > 0 ? item.images[0].url : null,
-        releaseDate: item.release_date || null,
+
+        imageUrl: item.images?.[0]?.url || item.album?.images?.[0]?.url || item.show?.images?.[0]?.url || null,
+
+        releaseDate: date,
         externalId: `spotify-${item.id}`,
         genres: [],
         creator: item.artists ? item.artists.map(a => a.name).join(", ") : (item.publisher || null),
-
         id: null, rating: null, status: null, userId: null,
     };
 }

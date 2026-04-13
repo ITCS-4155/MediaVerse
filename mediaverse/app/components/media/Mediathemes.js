@@ -76,7 +76,7 @@ export const StarIcon = ({ size = 13 }) => (
 
 export const mediaThemes = [
   {
-    id: "film",
+    id: "movie",
     label: "Movies & TV",
     tagline: "Never lose track of what to watch.",
     count: "500K+ titles",
@@ -130,7 +130,7 @@ export const mediaThemes = [
     ],
   },
   {
-    id: "books",
+    id: "book",
     label: "Books",
     tagline: "From your shelf to your soul.",
     count: "35M+ titles",
@@ -157,7 +157,7 @@ export const mediaThemes = [
     ],
   },
   {
-    id: "games",
+    id: "game",
     label: "Video Games",
     tagline: "Conquer your backlog. Finally.",
     count: "500K+ games",
@@ -184,7 +184,7 @@ export const mediaThemes = [
     ],
   },
   {
-    id: "podcasts",
+    id: "podcast",
     label: "Podcasts",
     tagline: "Every episode worth remembering.",
     count: "4M+ shows",

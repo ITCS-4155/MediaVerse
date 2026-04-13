@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { mediaThemes, getTheme } from "../components/media/Mediathemes";
+import { saveMedia, getUserProfile } from "../actions/library";
 
 export default function SearchPageWrapper() {
     return (
@@ -24,7 +25,7 @@ function SearchPage() {
     const searchParams = useSearchParams();
     const [currentUser, setCurrentUser] = useState(null);
 
-    const urlType = searchParams.get("type") || "film";
+    const urlType = searchParams.get("type") || "movie";
     const urlQuery = searchParams.get("q") || "";
     const urlGenre = searchParams.get("genre") || "";
 
@@ -36,16 +37,11 @@ function SearchPage() {
 
     useEffect(() => {
         const fetchResults = async () => {
-            if (!urlQuery && !urlGenre) {
-                setResults([]);
-                return;
-            }
-
             setIsLoading(true);
             setError(null);
 
             try {
-                const res = await fetch(`/api/search?type=${urlType}&q=${encodeURIComponent(urlQuery)}&genre=${encodeURIComponent(urlGenre)}`);
+                const res = await fetch(`/media/search?type=${urlType}&q=${encodeURIComponent(urlQuery)}&genre=${encodeURIComponent(urlGenre)}`);
                 const data = await res.json();
 
                 if (data.results) {
@@ -64,10 +60,23 @@ function SearchPage() {
     }, [urlType, urlQuery, urlGenre]);
 
     useEffect(() => {
-        fetch("/api/me")
-            .then((r) => (r.ok ? r.json() : null))
-            .then((data) => setCurrentUser(data?.user ?? null))
-            .catch(() => setCurrentUser(null));
+        async function loadUser() {
+            try {
+                const res = await fetch(`/api/me?t=${Date.now()}`);
+                const data = res.ok ? await res.json() : null;
+
+                if (data?.user?.id) {
+                    const profileRes = await getUserProfile(data.user.id);
+                    setCurrentUser(profileRes.success ? profileRes.data : data.user);
+                } else {
+                    setCurrentUser(null);
+                }
+            } catch (error) {
+                console.error("Failed to load user:", error);
+                setCurrentUser(null);
+            }
+        }
+        loadUser();
     }, []);
 
     const handleTypeChange = (newType) => {
@@ -81,14 +90,23 @@ function SearchPage() {
 
     const handleGenreClick = (clickedGenre) => {
         const newGenre = urlGenre === clickedGenre ? "" : clickedGenre;
-
         setSearchInput("");
         router.push(`${pathname}?type=${urlType}&q=&genre=${encodeURIComponent(newGenre)}`);
     };
 
-    const handleAdd = (item) => {
-        console.log("Adding to Tracker via Server Action:", item.title);
-        // TODO: Await saveMediaToList(item, listId, userId)
+    const handleAdd = async (item) => {
+        if (!currentUser) {
+            alert("Please log in to save media to your library.");
+            return;
+        }
+
+        const response = await saveMedia(item, currentUser.id);
+
+        if (response.success) {
+            alert(`Successfully added ${item.title} to your library!`);
+        } else {
+            alert("Failed to save media. Please try again.");
+        }
     };
 
     return (
@@ -128,7 +146,7 @@ function SearchPage() {
                     </div>
 
                     <Link href="/profile"
-                          className="w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold transition-all duration-300 hover:scale-105"
+                          className="w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold transition-all duration-300 hover:scale-105 overflow-hidden"
                           style={{
                               backgroundColor: current.accentSoft,
                               borderColor: current.border,
@@ -136,7 +154,10 @@ function SearchPage() {
                           }}
                           title={currentUser?.name || "Your Profile"}
                     >
-                        {currentUser?.name ? getInitials(currentUser.name) : "US"}
+                        {currentUser?.image ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={currentUser.image} alt="User" className="w-full h-full object-cover" />
+                        ) : currentUser?.name ? getInitials(currentUser.name) : "US"}
                     </Link>
                 </div>
             </div>
@@ -229,7 +250,12 @@ function SearchPage() {
                                             // eslint-disable-next-line @next/next/no-img-element
                                             <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
                                         ) : (
-                                            <div className="absolute inset-0 flex items-center justify-center text-xs opacity-30">No Image</div>
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0d1117] p-4 text-center">
+                                                <span className="text-3xl mb-2 opacity-50">{current.icon}</span>
+                                                <span className="text-xs font-semibold opacity-40 uppercase tracking-widest" style={{ color: current.accent }}>
+                                                    {current.label}
+                                                </span>
+                                            </div>
                                         )}
 
                                         {/* Add to List Button Overlay */}
