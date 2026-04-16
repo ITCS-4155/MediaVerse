@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { mediaThemes, getTheme } from "../components/media/Mediathemes";
 import { saveMedia, getUserProfile } from "../actions/library";
+import MediaDetailsModal from "../components/media/Mediadetails";
 
 export default function SearchPageWrapper() {
     return (
@@ -34,20 +35,30 @@ function SearchPage() {
     const [results, setResults] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [selectedItem, setSelectedItem] = useState(null);
 
+    const [page, setPage] = useState(1);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+
+    // Initial Fetch (Resets when search params change)
     useEffect(() => {
         const fetchResults = async () => {
             setIsLoading(true);
             setError(null);
+            setPage(1); // Reset to page 1 on new search
 
             try {
-                const res = await fetch(`/media/search?type=${urlType}&q=${encodeURIComponent(urlQuery)}&genre=${encodeURIComponent(urlGenre)}`);
+                const res = await fetch(`/media/search?type=${urlType}&q=${encodeURIComponent(urlQuery)}&genre=${encodeURIComponent(urlGenre)}&page=1`);
                 const data = await res.json();
 
                 if (data.results) {
                     setResults(data.results);
+                    // If we get less than 10 results back, assume there are no more pages
+                    setHasMore(data.results.length >= 10);
                 } else {
                     setError(data.error || "Failed to fetch results");
+                    setHasMore(false);
                 }
             } catch (err) {
                 setError("Something went wrong connecting to the server.");
@@ -58,6 +69,31 @@ function SearchPage() {
 
         fetchResults();
     }, [urlType, urlQuery, urlGenre]);
+
+    // 🛠️ NEW: Load More Function
+    const handleLoadMore = async () => {
+        if (isLoadingMore || !hasMore) return;
+
+        const nextPage = page + 1;
+        setIsLoadingMore(true);
+
+        try {
+            const res = await fetch(`/media/search?type=${urlType}&q=${encodeURIComponent(urlQuery)}&genre=${encodeURIComponent(urlGenre)}&page=${nextPage}`);
+            const data = await res.json();
+
+            if (data.results && data.results.length > 0) {
+                setResults((prev) => [...prev, ...data.results]); // Append new results
+                setPage(nextPage);
+                if (data.results.length < 10) setHasMore(false); // Hide button if less than 10 items returned
+            } else {
+                setHasMore(false); // No more results
+            }
+        } catch (err) {
+            console.error("Failed to load more:", err);
+        } finally {
+            setIsLoadingMore(false);
+        }
+    };
 
     useEffect(() => {
         async function loadUser() {
@@ -95,18 +131,8 @@ function SearchPage() {
     };
 
     const handleAdd = async (item) => {
-        if (!currentUser) {
-            alert("Please log in to save media to your library.");
-            return;
-        }
-
-        const response = await saveMedia(item, currentUser.id);
-
-        if (response.success) {
-            alert(`Successfully added ${item.title} to your library!`);
-        } else {
-            alert("Failed to save media. Please try again.");
-        }
+        if (!currentUser) return;
+        await saveMedia(item, currentUser.id);
     };
 
     return (
@@ -125,11 +151,10 @@ function SearchPage() {
                     <Link href="/explore" className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full inline-block transition-colors duration-500" style={{ backgroundColor: current.accent }} />
                         <span className="text-xs tracking-[0.18em] uppercase font-semibold transition-colors duration-500" style={{ color: current.accent }}>
-              mediaverse
-            </span>
+                            mediaverse
+                        </span>
                     </Link>
 
-                    {/* Category tabs */}
                     <div className="flex items-center gap-1 overflow-x-auto">
                         {mediaThemes.map((t) => (
                             <button key={t.id} onClick={() => handleTypeChange(t.id)}
@@ -155,17 +180,14 @@ function SearchPage() {
                           title={currentUser?.name || "Your Profile"}
                     >
                         {currentUser?.image ? (
-                            // eslint-disable-next-line @next/next/no-img-element
                             <img src={currentUser.image} alt="User" className="w-full h-full object-cover" />
                         ) : currentUser?.name ? getInitials(currentUser.name) : "US"}
                     </Link>
                 </div>
             </div>
 
-            {/* Main content */}
             <div className="relative z-10 max-w-7xl mx-auto px-6 pt-28 pb-20">
 
-                {/* search bar */}
                 <form onSubmit={handleSearchSubmit} className="mb-8 max-w-3xl">
                     <div className="relative flex items-center">
                         <input
@@ -190,7 +212,6 @@ function SearchPage() {
                     </div>
                 </form>
 
-                {/* genre pills */}
                 <div className="mb-12">
                     <p className="text-xs font-bold tracking-widest uppercase mb-4 transition-colors duration-500" style={{ color: current.accent }}>
                         Or browse by genre
@@ -222,7 +243,6 @@ function SearchPage() {
                     </div>
                 </div>
 
-                {/* results */}
                 <div>
                     <h2 className="text-sm font-bold tracking-widest uppercase mb-6 transition-colors duration-500" style={{ color: current.accent }}>
                         {urlQuery ? `Results for "${urlQuery}"` : urlGenre ? `${urlGenre} ${current.label}` : `Discover ${current.label}`}
@@ -241,47 +261,75 @@ function SearchPage() {
                             No results found. Try a different search term or genre.
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                            {results.map((item) => (
-                                <div key={item.externalId} className="group relative rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.02]" style={{ backgroundColor: "#111", border: `1px solid ${current.border}` }}>
-                                    {/* Poster Image */}
-                                    <div className="aspect-[2/3] w-full bg-neutral-900 relative">
-                                        {item.imageUrl ? (
-                                            // eslint-disable-next-line @next/next/no-img-element
-                                            <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
-                                        ) : (
-                                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0d1117] p-4 text-center">
-                                                <span className="text-3xl mb-2 opacity-50">{current.icon}</span>
-                                                <span className="text-xs font-semibold opacity-40 uppercase tracking-widest" style={{ color: current.accent }}>
-                                                    {current.label}
-                                                </span>
-                                            </div>
-                                        )}
+                        <>
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                {results.map((item) => (
+                                    <div
+                                        key={item.externalId}
+                                        className="group relative rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+                                        style={{ backgroundColor: "#111", border: `1px solid ${current.border}` }}
+                                        onClick={() => setSelectedItem(item)}
+                                    >
+                                        <div className="aspect-[2/3] w-full bg-neutral-900 relative">
+                                            {item.imageUrl ? (
+                                                <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
+                                            ) : (
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0d1117] p-4 text-center">
+                                                    <span className="text-3xl mb-2 opacity-50">{current.icon}</span>
+                                                    <span className="text-xs font-semibold opacity-40 uppercase tracking-widest" style={{ color: current.accent }}>
+                                                        {current.label}
+                                                    </span>
+                                                </div>
+                                            )}
 
-                                        {/* Add to List Button Overlay */}
-                                        <button
-                                            onClick={() => handleAdd(item)}
-                                            className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0"
-                                            style={{ backgroundColor: current.accent, color: "#000" }}
-                                        >
-                                            +
-                                        </button>
-                                    </div>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleAdd(item); }}
+                                                className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0"
+                                                style={{ backgroundColor: current.accent, color: "#000" }}
+                                            >
+                                                +
+                                            </button>
+                                        </div>
 
-                                    {/* Info Card */}
-                                    <div className="p-3">
-                                        <h3 className="font-bold text-sm truncate" style={{ color: current.text }}>{item.title}</h3>
-                                        <p className="text-xs mt-1 truncate" style={{ color: current.sub }}>
-                                            {item.releaseDate ? item.releaseDate.substring(0, 4) : "Unknown Year"}
-                                            {item.creator && ` • ${item.creator}`}
-                                        </p>
+                                        <div className="p-3">
+                                            <h3 className="font-bold text-sm truncate" style={{ color: current.text }}>{item.title}</h3>
+                                            <p className="text-xs mt-1 truncate" style={{ color: current.sub }}>
+                                                {item.releaseDate ? item.releaseDate.substring(0, 4) : "Unknown Year"}
+                                                {item.creator && ` • ${item.creator}`}
+                                            </p>
+                                        </div>
                                     </div>
+                                ))}
+                            </div>
+
+                            {hasMore && results.length > 0 && (
+                                <div className="mt-12 flex justify-center">
+                                    <button
+                                        onClick={handleLoadMore}
+                                        disabled={isLoadingMore}
+                                        className="px-8 py-3 rounded-full text-sm font-bold transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                                        style={{
+                                            backgroundColor: current.accentSoft,
+                                            color: current.accent,
+                                            border: `1px solid ${current.border}`
+                                        }}
+                                    >
+                                        {isLoadingMore ? "Loading..." : "See More"}
+                                    </button>
                                 </div>
-                            ))}
-                        </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>
+
+            {selectedItem && (
+                <MediaDetailsModal
+                    item={selectedItem}
+                    onClose={() => setSelectedItem(null)}
+                    onAdd={handleAdd}
+                />
+            )}
         </div>
     );
 }
