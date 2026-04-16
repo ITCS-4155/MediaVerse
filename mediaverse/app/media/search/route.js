@@ -14,7 +14,6 @@ const redis = new Redis({
 async function getSpotifyToken() {
     const authString = Buffer.from(`${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`).toString('base64');
 
-    // 🛠️ FIX: The REAL Spotify Auth URL
     const res = await fetch('https://accounts.spotify.com/api/token', {
         method: 'POST',
         headers: {
@@ -42,6 +41,11 @@ export async function GET(req) {
         const genre = searchParams.get("genre") || "";
         let type = searchParams.get("type");
 
+        const pageParam = searchParams.get("page") || "1";
+        const page = parseInt(pageParam, 10) || 1;
+        const limit = 10;
+        const offset = (page - 1) * limit;
+
         if (type === "film") type = "movie";
 
         if (!type) {
@@ -49,7 +53,8 @@ export async function GET(req) {
         }
 
         const cacheTerm = query ? `text:${query.toLowerCase()}` : genre ? `genre:${genre.toLowerCase()}` : `all`;
-        const cacheKey = `search:${type}:${cacheTerm}`;
+
+        const cacheKey = `search:${type}:${cacheTerm}:page:${page}`;
 
         // --- CACHE CHECK ---
         const cachedIds = await redis.get(cacheKey);
@@ -70,12 +75,12 @@ export async function GET(req) {
         if (type === "movie" || type === "show") {
             let url;
             if (query) {
-                url = `https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(query)}`;
+                url = `https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(query)}&page=${page}`;
             } else if (genre) {
                 const apiGenre = getApiGenreFormat("movie", genre);
-                url = `https://api.themoviedb.org/3/discover/${type === "show" ? "tv" : "movie"}?with_genres=${apiGenre}`;
+                url = `https://api.themoviedb.org/3/discover/${type === "show" ? "tv" : "movie"}?with_genres=${apiGenre}&page=${page}`;
             } else {
-                url = `https://api.themoviedb.org/3/discover/${type === "show" ? "tv" : "movie"}?sort_by=popularity.desc`;
+                url = `https://api.themoviedb.org/3/discover/${type === "show" ? "tv" : "movie"}?sort_by=popularity.desc&page=${page}`;
             }
 
             const response = await fetch(url, { headers: { accept: "application/json", Authorization: `Bearer ${process.env.TMDB_API_TOKEN}` }});
@@ -90,12 +95,12 @@ export async function GET(req) {
         else if (type === "book") {
             let url;
             if (query) {
-                url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=10&key=${process.env.GOOGLE_BOOKS_API_TOKEN}`;
+                url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=${limit}&startIndex=${offset}&key=${process.env.GOOGLE_BOOKS_API_TOKEN}`;
             } else if (genre) {
                 const apiGenre = getApiGenreFormat("book", genre);
-                url = `https://www.googleapis.com/books/v1/volumes?q=subject:"${encodeURIComponent(apiGenre)}"&maxResults=10&key=${process.env.GOOGLE_BOOKS_API_TOKEN}`;
+                url = `https://www.googleapis.com/books/v1/volumes?q=subject:"${encodeURIComponent(apiGenre)}"&maxResults=${limit}&startIndex=${offset}&key=${process.env.GOOGLE_BOOKS_API_TOKEN}`;
             } else {
-                url = `https://www.googleapis.com/books/v1/volumes?q=subject:"fiction"&orderBy=relevance&maxResults=10&key=${process.env.GOOGLE_BOOKS_API_TOKEN}`;
+                url = `https://www.googleapis.com/books/v1/volumes?q=subject:"fiction"&orderBy=relevance&maxResults=${limit}&startIndex=${offset}&key=${process.env.GOOGLE_BOOKS_API_TOKEN}`;
             }
 
             const response = await fetch(url);
@@ -112,19 +117,24 @@ export async function GET(req) {
             let bodyString;
 
             if (query) {
-                bodyString = `search "${query}"; fields name, cover.url, first_release_date, summary; limit 10;`;
+                bodyString = `search "${query}"; fields name, cover.url, first_release_date, summary; where themes != (42); limit ${limit}; offset ${offset};`;
             } else if (genre) {
                 const apiGenre = getApiGenreFormat("game", genre);
-                bodyString = `fields name, cover.url, first_release_date, summary; where genres = (${apiGenre}); limit 10;`;
+                bodyString = `fields name, cover.url, first_release_date, summary; where genres = (${apiGenre}) & themes != (42); limit ${limit}; offset ${offset};`;
             } else {
-                bodyString = `fields name, cover.url, first_release_date, summary; sort follows desc; limit 10;`;
+                bodyString = `fields name, cover.url, first_release_date, summary; where themes != (42); sort follows desc; limit ${limit}; offset ${offset};`;
             }
 
             const response = await fetch("https://api.igdb.com/v4/games", {
                 method: "POST",
-                headers: { "Accept": "application/json", "Client-ID": process.env.IGDB_CLIENT_ID, "Authorization": `Bearer ${freshIgdbToken}` },
+                headers: {
+                    "Accept": "application/json",
+                    "Client-ID": process.env.IGDB_CLIENT_ID,
+                    "Authorization": `Bearer ${freshIgdbToken}`
+                },
                 body: bodyString,
             });
+
             if (!response.ok) throw new Error("IGDB fetch failed");
             rawResults = await response.json();
         }
@@ -153,7 +163,7 @@ export async function GET(req) {
                 }
             }
 
-            const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=${type === "podcast" ? "show" : "album,track"}&limit=10`;
+            const url = `https://api.spotify.com/v1/search?q=$?q=${encodeURIComponent(searchQuery)}&type=${type === "podcast" ? "show" : "album,track"}&limit=${limit}&offset=${offset}`;
 
             const response = await fetch(url, { headers: { Authorization: `Bearer ${freshSpotifyToken}` } });
 

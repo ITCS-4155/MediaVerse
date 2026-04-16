@@ -7,6 +7,7 @@ import { MediaCard } from "../components/media/Mediacard";
 import { TrendingList } from "../components/media/Trendingitemcard";
 import { useRouter } from "next/navigation";
 import { saveMedia, getUserProfile } from "../actions/library";
+import MediaDetailsModal from "../components/media/Mediadetails";
 
 function getInitials(name) {
     if (!name) return "US";
@@ -18,6 +19,7 @@ export default function ExplorePage() {
     const [currentUser, setCurrentUser] = useState(null);
     const [trendingItems, setTrendingItems] = useState([]);
     const [isLoadingTrending, setIsLoadingTrending] = useState(true);
+    const [selectedItem, setSelectedItem] = useState(null);
 
     const current = getTheme(activeId);
     const router = useRouter();
@@ -223,8 +225,8 @@ export default function ExplorePage() {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <TrendingList theme={{ ...current, trending: trendingItems }} limit={3} offset={0} onAdd={handleAdd} />
-                            <TrendingList theme={{ ...current, trending: trendingItems }} limit={3} offset={3} onAdd={handleAdd} />
+                            <TrendingList theme={{ ...current, trending: trendingItems }} limit={3} offset={0} onAdd={handleAdd} onItemClick={setSelectedItem} />
+                            <TrendingList theme={{ ...current, trending: trendingItems }} limit={3} offset={3} onAdd={handleAdd} onItemClick={setSelectedItem} />
                         </div>
                     )}
                 </div>
@@ -258,6 +260,14 @@ export default function ExplorePage() {
                 </div>
 
             </div>
+
+            {selectedItem && (
+                <MediaDetailsModal
+                    item={selectedItem}
+                    onClose={() => setSelectedItem(null)}
+                    onAdd={handleAdd}
+                />
+            )}
         </div>
     );
 }

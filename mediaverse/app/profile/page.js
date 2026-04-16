@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
     getUserLibrary, getUserLists, createCustomList, updateMediaEntry,
     deleteMediaItem, getListDetails, deleteList, removeMediaFromList, saveMediaToList,
-    getUserProfile // 🛠️ NEW: Import the profile fetcher
+    getUserProfile
 } from "../actions/library";
 
 const MEDIA_TYPE_LABELS = {
@@ -74,11 +74,31 @@ function EditMediaModal({ item, userLists, onClose, onUpdate, onDelete, onAddToL
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center px-4 backdrop-blur-sm">
-            <div className="bg-[#0d1117] border border-gray-700 rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-start mb-5">
-                    <h2 className="text-lg font-bold text-gray-100">{item.title}</h2>
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center px-4 backdrop-blur-sm" onClick={onClose}>
+            <div className="bg-[#0d1117] border border-gray-700 rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+
+                <div className="flex justify-between items-start mb-5 border-b border-gray-800 pb-4">
+                    <h2 className="text-xl font-bold text-gray-100">{item.title}</h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-white">✕</button>
+                </div>
+
+                {/* 🛠️ NEW: Added Media Details Section */}
+                <div className="flex flex-col sm:flex-row gap-6 mb-8 bg-[#06080f] p-4 rounded-xl border border-gray-800">
+                    {item.imageUrl && (
+                        <img src={item.imageUrl} alt={item.title} className="w-24 h-36 sm:w-32 sm:h-48 object-cover rounded-lg shadow-md flex-shrink-0" />
+                    )}
+                    <div className="flex-1 flex flex-col min-w-0">
+                        <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-1">{item.type}</p>
+                        <p className="text-xs text-gray-500 mb-3">
+                            {item.releaseDate ? new Date(item.releaseDate).getFullYear() : "Unknown Year"}
+                            {item.creator && ` • ${item.creator}`}
+                        </p>
+                        <div className="flex-1 overflow-y-auto max-h-[120px] pr-2">
+                            <p className="text-sm text-gray-400 italic leading-relaxed">
+                                {item.description || "No description available."}
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="space-y-4">
