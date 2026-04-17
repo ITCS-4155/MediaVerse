@@ -239,7 +239,6 @@ export async function updateProfile(userId, profileData) {
             where: { id: userId },
             data: {
                 name: profileData.name,
-                location: profileData.location,
                 bio: profileData.bio,
                 image: profileData.avatar,
             },
